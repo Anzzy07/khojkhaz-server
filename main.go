@@ -4,6 +4,7 @@ import (
 	"khojkhaz-server/routes"
 	"khojkhaz-server/storage"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/kataras/iris/v12"
 )
@@ -13,6 +14,7 @@ func main() {
     storage.InitializeDB()
 
 	app := iris.Default()
+	app.Validator = validator.New()
 
 	location := app.Party("/api/location")
 	{
@@ -23,6 +25,7 @@ func main() {
 	user := app.Party("/api/user")
 	{
 		user.Post("/register", routes.Register)
+		user.Post("/login", routes.Login)
 	}
 
 	app.Listen(":4000")

@@ -1,9 +1,9 @@
 package routes
 
 import (
-	"fmt"
 	"khojkhaz-server/models"
 	"khojkhaz-server/storage"
+	"khojkhaz-server/utils"
 	"strings"
 
 	"github.com/kataras/iris/v12"
@@ -14,23 +14,23 @@ func Register(ctx iris.Context) {
 	var userInput RegisterUserInput
 	err := ctx.ReadJSON(&userInput)
 	if err != nil {
-		fmt.Println(err.Error())
+		utils.HandleValidationErrors(err, ctx)
 		return
 	}
 
 	var newUser models.User
 	userExists, userExistsErr := getAndHandleUserExists(&newUser, userInput.Email)
 	if userExistsErr != nil {
-		fmt.Println(err.Error())
+		utils.CreateInternalServerError(ctx)
 		return
 	}
 	if userExists == true {
-		fmt.Println("User Exists")
+		utils.CreateError(iris.StatusConflict, "Conflict", "Email already Exists", ctx)
 		return
 	}
 	hashedPassword, hashErr := hashAndSaltPassword(userInput.Password)
 	if hashErr != nil {
-		fmt.Println(hashErr.Error())
+		utils.CreateInternalServerError(ctx)
 		return
 	}
 
@@ -44,10 +44,50 @@ func Register(ctx iris.Context) {
 	storage.DB.Create(&newUser)
 
 	ctx.JSON(iris.Map{
-		"ID":                  newUser.ID,
-		"firstName":           newUser.FirstName,
-		"lastName":            newUser.LastName,
-		"email":               newUser.Email,
+		"ID":        newUser.ID,
+		"firstName": newUser.FirstName,
+		"lastName":  newUser.LastName,
+		"email":     newUser.Email,
+	})
+}
+
+func Login(ctx iris.Context) {
+	var userInput LoginUserInput
+	err := ctx.ReadJSON(&userInput)
+	if err != nil {
+		utils.HandleValidationErrors(err, ctx)
+		return
+	}
+	var existingUser models.User
+	errorMsg := "Invalid email or password."
+	userExists, userExistsErr := getAndHandleUserExists(&existingUser, userInput.Email)
+	if userExistsErr != nil {
+		utils.CreateInternalServerError(ctx)
+		return
+	}
+	if userExists == false {
+		utils.CreateError(iris.StatusUnauthorized, "Credentials Error", errorMsg, ctx)
+		return
+	}
+
+	// Questionable as to whether you should let userInput know they logged in with Oauth
+	// typically the fewer things said the better
+	// If you don't want this, simply comment it out and the app will still work
+	if existingUser.SocialLogin == true {
+		utils.CreateError(iris.StatusUnauthorized, "Credentials Error", "Social Login Account", ctx)
+		return
+	}
+	passwordErr := bcrypt.CompareHashAndPassword([]byte(existingUser.Password), []byte(userInput.Password))
+	if passwordErr != nil {
+		utils.CreateError(iris.StatusUnauthorized, "Credentials Error", errorMsg, ctx)
+		return
+	}
+
+	ctx.JSON(iris.Map{
+		"ID":                  existingUser.ID,
+		"firstName":           existingUser.FirstName,
+		"lastName":            existingUser.LastName,
+		"email":               existingUser.Email,
 	})
 }
 
@@ -74,10 +114,14 @@ func hashAndSaltPassword(password string) (hashedPassword string, err error) {
 	return string(bytes), nil
 }
 
-
 type RegisterUserInput struct {
 	FirstName string `json:"firstName" validate:"required,max=256"`
 	LastName  string `json:"lastName" validate:"required,max=256"`
 	Email     string `json:"email" validate:"required,max=256,email"`
 	Password  string `json:"password" validate:"required,min=8,max=256"`
+}
+
+type LoginUserInput struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
 }
