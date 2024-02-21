@@ -27,6 +27,8 @@ func main() {
 		user.Post("/register", routes.Register)
 		user.Post("/login", routes.Login)
 		user.Post("/facebook", routes.FacebookLoginOrSignUp)
+		user.Post("/google", routes.GoogleLoginOrSignUp)
+		user.Post("/apple", routes.AppleLoginOrSignUp)
 	}
 
 	app.Listen(":4000")

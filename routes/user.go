@@ -2,6 +2,7 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"khojkhaz-server/models"
 	"khojkhaz-server/storage"
@@ -10,6 +11,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/MicahParks/keyfunc"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/kataras/iris/v12"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -95,7 +98,7 @@ func Login(ctx iris.Context) {
 }
 
 func FacebookLoginOrSignUp(ctx iris.Context){
-	var userInput FacebookUserInput
+	var userInput FacebookOrGoogleUserInput
 	err := ctx.ReadJSON(&userInput)
 	if err != nil {
 		utils.HandleValidationErrors(err, ctx)
@@ -156,6 +159,146 @@ func FacebookLoginOrSignUp(ctx iris.Context){
 	}
 }
 
+func GoogleLoginOrSignUp(ctx iris.Context) {
+	var userInput FacebookOrGoogleUserInput
+	err := ctx.ReadJSON(&userInput)
+	if err != nil {
+		utils.HandleValidationErrors(err, ctx)
+		return
+	}
+
+	endpoint := "https://www.googleapis.com/userinfo/v2/me"
+
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", endpoint, nil)
+	header := "Bearer " + userInput.AccessToken
+	req.Header.Set("Authorization", header)
+	res, googleErr := client.Do(req)
+	if googleErr != nil {
+		utils.CreateInternalServerError(ctx)
+		return
+	}
+
+	defer res.Body.Close()
+	body, bodyErr := io.ReadAll(res.Body)
+	if bodyErr != nil {
+		log.Panic(bodyErr)
+		utils.CreateInternalServerError(ctx)
+		return
+	}
+	var googleBody GoogleUserRes
+	json.Unmarshal(body, &googleBody)
+
+	if googleBody.Email != "" {
+		var user models.User
+		userExists, userExistsErr := getAndHandleUserExists(&user, googleBody.Email)
+
+		if userExistsErr != nil {
+			utils.CreateInternalServerError(ctx)
+			return
+		}
+
+		if userExists == false {
+			user = models.User{FirstName: googleBody.GivenName, LastName: googleBody.FamilyName, Email: googleBody.Email, SocialLogin: true, SocialProvider: "Google"}
+			storage.DB.Create(&user)
+
+			ctx.JSON(iris.Map{
+				"ID":        user.ID,
+				"firstName": user.FirstName,
+				"lastName":  user.LastName,
+				"email":     user.Email,
+			})
+			return
+		}
+
+		if user.SocialLogin == true && user.SocialProvider == "Google" {
+			ctx.JSON(iris.Map{
+				"ID":        user.ID,
+				"firstName": user.FirstName,
+				"lastName":  user.LastName,
+				"email":     user.Email,
+			})
+			return
+		}
+
+		utils.CreateEmailAlreadyRegistered(ctx)
+		return
+	}
+}
+
+func AppleLoginOrSignUp(ctx iris.Context) {
+	var userInput AppleUserInput
+	err := ctx.ReadJSON(&userInput)
+	if err != nil {
+		utils.HandleValidationErrors(err, ctx)
+	}
+
+	res, httpErr := http.Get("https://appleid.apple.com/auth/keys")
+	if httpErr != nil {
+		utils.CreateInternalServerError(ctx)
+		return
+	}
+	defer res.Body.Close()
+
+	body, bodyErr := io.ReadAll(res.Body)
+	if bodyErr != nil {
+		utils.CreateInternalServerError(ctx)
+		return
+	}
+
+	jwks, jwksErr := keyfunc.NewJSON(body)
+	//The JWKS.Keyfunc method will automatically select the key with the matching kid (if present) and return its public key as the correct Go type to its caller.
+	token, tokenErr := jwt.Parse(userInput.IdentityToken, jwks.Keyfunc)
+
+	if jwksErr != nil || tokenErr != nil {
+		utils.CreateInternalServerError(ctx)
+		return
+	}
+
+	if !token.Valid {
+		utils.CreateError(iris.StatusUnauthorized, "Unauthorized", "Invalid user token.", ctx)
+		return
+	}
+
+	email := fmt.Sprint(token.Claims.(jwt.MapClaims)["email"])
+	if email != "" {
+		var user models.User
+		userExists, userExistsErr := getAndHandleUserExists(&user, email)
+
+		if userExistsErr != nil {
+			utils.CreateInternalServerError(ctx)
+			return
+		}
+
+		if userExists == false {
+			user = models.User{FirstName: "", LastName: "", Email: email, SocialLogin: true, SocialProvider: "Apple"}
+			storage.DB.Create(&user)
+
+			ctx.JSON(iris.Map{
+				"ID":        user.ID,
+				"firstName": user.FirstName,
+				"lastName":  user.LastName,
+				"email":     user.Email,
+			})
+			return
+		}
+
+		if user.SocialLogin == true && user.SocialProvider == "Apple" {
+			ctx.JSON(iris.Map{
+				"ID":        user.ID,
+				"firstName": user.FirstName,
+				"lastName":  user.LastName,
+				"email":     user.Email,
+			})
+			return
+		}
+
+		utils.CreateEmailAlreadyRegistered(ctx)
+		return
+	}
+}
+
+
 func getAndHandleUserExists(user *models.User, email string) (exists bool, err error) {
 	userExistsQuery := storage.DB.Where("email = ?", strings.ToLower(email)).Limit(1).Find(&user)
 
@@ -191,7 +334,7 @@ type LoginUserInput struct {
 	Password string `json:"password" validate:"required"`
 }
 
-type FacebookUserInput struct {
+type FacebookOrGoogleUserInput struct {
 	AccessToken string `json:"accessToken" validate:"required"`
 }
 
@@ -199,4 +342,16 @@ type FacebookUserRes struct {
 	ID    string `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
+}
+
+type GoogleUserRes struct {
+	ID         string `json:"id"`
+	Email      string `json:"email"`
+	Name       string `json:"name"`
+	GivenName  string `json:"given_name"`
+	FamilyName string `json:"family_name"`
+}
+
+type AppleUserInput struct {
+	IdentityToken string `json:"identityToken" validate:"required"`
 }
