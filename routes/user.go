@@ -298,6 +298,37 @@ func AppleLoginOrSignUp(ctx iris.Context) {
 	}
 }
 
+func ForgotPassword(ctx iris.Context) {
+	var emailInput EmailRegisteredInput
+	err := ctx.ReadJSON(&emailInput)
+	if err != nil {
+		utils.HandleValidationErrors(err, ctx)
+		return
+	}
+
+	var user models.User
+	userExists, userExistsErr := getAndHandleUserExists(&user, emailInput.Email)
+
+	if userExistsErr != nil {
+		utils.CreateInternalServerError(ctx)
+		return
+	}
+
+	if !userExists {
+		utils.CreateError(iris.StatusUnauthorized, "Credentials Error", "Invalid email.", ctx)
+		return
+	}
+
+	if userExists {
+		if user.SocialLogin {
+			utils.CreateError(iris.StatusUnauthorized, "Credentials Error", "Social Login Account", ctx)
+			return
+		}
+
+		link := "exp://192.168.2.98:8081/--/resetpassword"
+	}
+}
+
 
 func getAndHandleUserExists(user *models.User, email string) (exists bool, err error) {
 	userExistsQuery := storage.DB.Where("email = ?", strings.ToLower(email)).Limit(1).Find(&user)
@@ -354,4 +385,8 @@ type GoogleUserRes struct {
 
 type AppleUserInput struct {
 	IdentityToken string `json:"identityToken" validate:"required"`
+}
+
+type EmailRegisteredInput struct {
+	Email string `json:"email" validate:"required"`
 }
