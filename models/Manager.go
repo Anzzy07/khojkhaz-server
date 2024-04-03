@@ -8,6 +8,6 @@ type Manager struct {
 	Email string `json:"email"`
 	PhoneNumber string `json:"phoneNumber"`
 	Website string `json:"website"`
-	UserID string `json:"userID"`
+	UserID uint `json:"userID"`
 	Image string `json:"image"`
 }

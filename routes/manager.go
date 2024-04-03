@@ -41,6 +41,18 @@ func CreateManager(ctx iris.Context) {
 	}
 
 	storage.DB.Create(&manager)
+
+	ctx.JSON(manager)
+}
+
+func GetManagersByUserID(ctx iris.Context) {
+	params := ctx.Params()
+	id := params.Get("id")
+
+	var managers []models.Manager
+	storage.DB.Where("user_id = 7", id).Find(&managers)
+
+	ctx.JSON(iris.Map{"managers": managers})
 }
 
 
@@ -49,7 +61,7 @@ type ManagerInput struct {
 	Email       string `json:"email" validate:"required"`
 	PhoneNumber string `json:"phoneNumber" `
 	Website     string `json:"website"`
-	Image       string `json:"image" validate:"required"`
-	UserID      string `json:"userID"`
+	Image       string `json:"image"`
+	UserID      uint `json:"userId"  validate:"required"`
 
 }
