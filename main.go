@@ -45,7 +45,7 @@ func main() {
 	manager := app.Party("/api/manager")
 	{
 		manager.Post("/create", routes.CreateManager)
-		manager.Get("/userid/(id)", routes.GetManagersByUserID)
+		manager.Get("/userid/{id}", routes.GetManagersByUserID)
 	}
 
 	app.Listen(":4000")

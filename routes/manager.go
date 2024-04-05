@@ -50,7 +50,7 @@ func GetManagersByUserID(ctx iris.Context) {
 	id := params.Get("id")
 
 	var managers []models.Manager
-	storage.DB.Where("user_id = 7", id).Find(&managers)
+	storage.DB.Where("user_id = ?", id).Find(&managers)
 
 	ctx.JSON(iris.Map{"managers": managers})
 }
