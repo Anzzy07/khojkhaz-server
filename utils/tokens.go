@@ -21,7 +21,6 @@ func CreateForgotPasswordToken(id uint, email string) (string, error) {
 	}
 
 	return string(token), nil
-	
 }
 
 type ForgotPasswordToken struct {

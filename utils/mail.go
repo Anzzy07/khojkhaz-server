@@ -14,7 +14,7 @@ func SendMail(userEmail string, subject string, html string) (bool, error) {
 	messagesInfo := []mailjet.InfoMessagesV31{
 		{
 			From: &mailjet.RecipientV31{
-				Email: "anzel.acharya307@gmail.com",
+				Email: "giftg4754@gmail.com",
 			},
 			To: &mailjet.RecipientsV31{
 				mailjet.RecipientV31{
@@ -25,10 +25,12 @@ func SendMail(userEmail string, subject string, html string) (bool, error) {
 			HTMLPart: html,
 		},
 	}
+
 	messages := mailjet.MessagesV31{Info: messagesInfo}
 	_, err := mailjetClient.SendMailV31(&messages)
 	if err != nil {
 		return false, err
 	}
-	return true,nil
+
+	return true, nil
 }

@@ -40,7 +40,7 @@ func main() {
 		user.Post("/google", routes.GoogleLoginOrSignUp)
 		user.Post("/apple", routes.AppleLoginOrSignUp)
 		user.Post("/forgotpassword", routes.ForgotPassword)
-		user.Post("/resetpassword", resetTokenVerifierMiddleware,routes.ResetPassword)
+		user.Post("/resetpassword", resetTokenVerifierMiddleware, routes.ResetPassword)
 	}
 	manager := app.Party("/api/manager")
 	{
