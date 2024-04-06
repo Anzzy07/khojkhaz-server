@@ -326,7 +326,7 @@ func ForgotPassword(ctx iris.Context) {
 			return
 		}
 
-		link := "exp://192.168.2.98:8081/--/resetpassword/"
+		link := " exp://192.168.2.98:8081/--/resetpassword/"
 		token, tokenErr := utils.CreateForgotPasswordToken(user.ID, user.Email)
 
 		if tokenErr != nil {
@@ -385,6 +385,7 @@ func ResetPassword(ctx iris.Context) {
 		"passwordReset": true,
 	})
 }
+
 
 
 func getAndHandleUserExists(user *models.User, email string) (exists bool, err error) {
