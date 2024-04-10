@@ -52,5 +52,11 @@ func main() {
 		property.Patch("/update/{id}", routes.UpdateProperty)
 	}
 
+	apartment := app.Party("/api/apartment")
+	{
+		apartment.Get("/property/{id}", routes.GetApartmentsByPropertyID)
+		apartment.Patch("/property/{id}", routes.UpdateApartments)
+	}
+
 	app.Listen(":4000")
 }

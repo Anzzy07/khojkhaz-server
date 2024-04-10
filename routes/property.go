@@ -15,7 +15,7 @@ import (
 
 
 func CreateProperty(ctx iris.Context) {
-	var propertyInput PropertyInput
+	var propertyInput CreatePropertyInput
 
 	err := ctx.ReadJSON(&propertyInput)
 	if err != nil {
@@ -47,6 +47,8 @@ func CreateProperty(ctx iris.Context) {
 			Unit:        element.Unit,
 			Bedrooms:    *element.Bedrooms,
 			Bathrooms:   element.Bathrooms,
+			AvailableOn: element.AvailableOn,
+			Active:      element.Active,
 		})
 	}
 
@@ -76,18 +78,8 @@ func GetProperty(ctx iris.Context) {
 	params := ctx.Params()
 	id := params.Get("id")
 
-	var property models.Property
-	propertyExits := storage.DB.Preload("Apartments").Find(&property, id)
-
-	if propertyExits.Error != nil {
-		utils.CreateError(
-			iris.StatusInternalServerError,
-			"Error", propertyExits.Error.Error(), ctx)
-			return
-	}
-
-	if propertyExits.RowsAffected == 0 {
-		utils.CreateError(iris.StatusNotFound, "Property Not Found", "Property Not Found", ctx)
+	property := GetPropertyAndApartmentsByPropertyID(id, ctx)
+	if property == nil {
 		return
 	}
 
@@ -131,14 +123,9 @@ func UpdateProperty(ctx iris.Context) {
 	params := ctx.Params()
 	id := params.Get("id")
 
-	var property models.Property
-	propertyExists := storage.DB.Preload("Apartments").Find(&property, id)
-
-	if propertyExists.Error != nil {
-		utils.CreateError(
-			iris.StatusInternalServerError,
-			"Error", propertyExists.Error.Error(),ctx)
-			return
+	property := GetPropertyAndApartmentsByPropertyID(id, ctx)
+	if property == nil {
+		return
 	}
 
 	var propertyInput UpdatePropertyInput
@@ -257,6 +244,26 @@ func UpdateProperty(ctx iris.Context) {
 	ctx.StatusCode(iris.StatusNoContent)
 }
 
+func GetPropertyAndApartmentsByPropertyID(id string, ctx iris.Context) *models.Property {
+	var property models.Property
+	propertyExits := storage.DB.Preload("Apartments").Find(&property, id)
+
+	if propertyExits.Error != nil {
+		utils.CreateError(
+			iris.StatusInternalServerError,
+			"Error", propertyExits.Error.Error(), ctx)
+			return nil
+	}
+
+	if propertyExits.RowsAffected == 0 {
+		utils.CreateError(iris.StatusNotFound, "Property Not Found", "Property Not Found", ctx)
+		return nil
+	}
+
+	return &property
+}
+
+
 func updateApartmentAndImages(apartment models.Apartment, images []string) {
 	apartmentID := strconv.FormatUint(uint64(apartment.ID), 10)
 
@@ -277,7 +284,7 @@ func updateApartmentAndImages(apartment models.Apartment, images []string) {
 func insertImages(arg InsertImages) []string {
 	var imagesArr []string
 	for _, image := range arg.images {
-		if !strings.Contains(image, "http") {
+		if !strings.Contains(image, storage.BucketName) {
 			imageID := randstr.Hex(16)
 			imageStr := "property/" + arg.propertyID
 			if arg.apartmentID != nil {
@@ -300,10 +307,7 @@ type InsertImages struct {
 	apartmentID *string
 }
 
-
-	
-
-type PropertyInput struct {
+type CreatePropertyInput struct {
 	UnitType     string                 `json:"unitType" validate:"required,oneof=single multiple"`
 	PropertyType string                 `json:"propertyType" validate:"required,max=256"`
 	Street       string                 `json:"street" validate:"required,max=512"`
@@ -313,13 +317,15 @@ type PropertyInput struct {
 	Lat          float32                `json:"lat" validate:"required"`
 	Lng          float32                `json:"lng" validate:"required"`
 	UserID       uint                   `json:"userID" validate:"required"`
-	Apartments   []ApartmentInput `json:"apartments" validate:"required,dive"`
+	Apartments   []CreateApartmentInput `json:"apartments" validate:"required,dive"`
 }
 
-type ApartmentInput struct {
+type CreateApartmentInput struct {
 	Unit        string    `json:"unit" validate:"max=512"`
 	Bedrooms    *int      `json:"bedrooms" validate:"gte=0,max=6,required"` // make int a pointer so 0 is accepted
 	Bathrooms   float32   `json:"bathrooms" validate:"min=0.5,max=6.5,required"`
+	Active      *bool     `json:"active" validate:"required"`
+	AvailableOn time.Time `json:"availableOn" validate:"required"`
 }
 
 type UpdatePropertyInput struct {
