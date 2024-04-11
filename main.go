@@ -50,12 +50,18 @@ func main() {
 		property.Get("/userid/{id}", routes.GetPropertiesByUserID)
 		property.Delete("/{id}", routes.DeleteProperty)
 		property.Patch("/update/{id}", routes.UpdateProperty)
+		property.Post("/search", routes.GetPropertiesByBoundingBox)
 	}
 
 	apartment := app.Party("/api/apartment")
 	{
 		apartment.Get("/property/{id}", routes.GetApartmentsByPropertyID)
 		apartment.Patch("/property/{id}", routes.UpdateApartments)
+	}
+
+	review := app.Party("/api/review")
+	{
+		review.Post("/property/{id}", routes.CreateReview)
 	}
 
 	app.Listen(":4000")
