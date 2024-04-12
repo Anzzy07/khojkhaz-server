@@ -1,6 +1,9 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/datatypes"
+	"gorm.io/gorm"
+)
 
 type User struct {
 	gorm.Model
@@ -11,4 +14,5 @@ type User struct {
 	SocialLogin         bool           `json:"socialLogin"`
 	SocialProvider      string         `json:"socialProvider"`
 	Properties          []Property     `json:"properties"`
+	SavedProperties     datatypes.JSON `json:"savedProperties"`
 }

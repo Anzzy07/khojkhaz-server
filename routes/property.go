@@ -24,7 +24,6 @@ func CreateProperty(ctx iris.Context) {
 		return
 	}
 
-
 	var apartments []models.Apartment
 	bedroomLow := 0
 	bedroomHigh := 0
@@ -70,7 +69,6 @@ func CreateProperty(ctx iris.Context) {
 		Apartments:   apartments,
 		UserID:       propertyInput.UserID,
 	}
-
 
 	storage.DB.Create(&property)
 
@@ -284,6 +282,7 @@ func GetPropertiesByBoundingBox(ctx iris.Context) {
 	ctx.JSON(properties)
 }
 
+
 func updateApartmentAndImages(apartment models.Apartment, images []string) {
 	apartmentID := strconv.FormatUint(uint64(apartment.ID), 10)
 
@@ -319,6 +318,7 @@ func insertImages(arg InsertImages) []string {
 	}
 	return imagesArr
 }
+
 
 
 type InsertImages struct {
