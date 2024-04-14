@@ -66,5 +66,10 @@ func main() {
 		review.Post("/property/{id}", routes.CreateReview)
 	}
 
+	notifications := app.Party("/api/notifications")
+	{
+		notifications.Post("/test", routes.TestMessageNotification)
+	}
+
 	app.Listen(":4000")
 }
