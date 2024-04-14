@@ -23,6 +23,10 @@ func CreateForgotPasswordToken(id uint, email string) (string, error) {
 	return string(token), nil
 }
 
+func CreateTokenPair(id uint) (*jwt.TokenPair, error) {
+	
+}
+
 type ForgotPasswordToken struct {
 	ID    uint   `json:"ID"`
 	Email string `json:"email"`
