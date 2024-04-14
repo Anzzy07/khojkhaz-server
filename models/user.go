@@ -15,4 +15,6 @@ type User struct {
 	SocialProvider      string         `json:"socialProvider"`
 	Properties          []Property     `json:"properties"`
 	SavedProperties     datatypes.JSON `json:"savedProperties"`
+	PushTokens          datatypes.JSON `json:"pushTokens"`
+	AllowsNotifications *bool          `json:"allowsNotifications"`
 }

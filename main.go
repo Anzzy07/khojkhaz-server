@@ -43,6 +43,8 @@ func main() {
 		user.Post("/resetpassword", resetTokenVerifierMiddleware, routes.ResetPassword)
 		user.Get("/{id}/properties/saved", routes.GetUserSavedProperties)
 		user.Patch("/{id}/properties/saved", routes.AlterUserSavedProperties)
+		user.Patch("/{id}/pushtoken", routes.AlterPushToken)
+		user.Patch("/{id}/settings/notifications",  routes.AllowsNotifications)
 	}
 
 	property := app.Party("/api/property")
