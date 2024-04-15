@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/kataras/iris/v12"
+	"github.com/kataras/iris/v12/middleware/jwt"
 	"github.com/thanhpk/randstr"
 	"gorm.io/gorm/clause"
 )
@@ -108,7 +109,21 @@ func DeleteProperty(ctx iris.Context) {
 	params := ctx.Params()
 	id := params.Get("id")
 
-	
+	var property models.Property
+	propertyExists := storage.DB.Find(&property, id)
+
+	if propertyExists.RowsAffected == 0 {
+		utils.CreateNotFound(ctx)
+		return
+	}
+
+	claims := jwt.Get(ctx).(*utils.AccessToken)
+
+	if property.UserID != claims.ID {
+		ctx.StatusCode(iris.StatusForbidden)
+		return
+	}
+
 	propertyDeleted := storage.DB.Delete(&models.Property{}, id)
 
 	if propertyDeleted.Error != nil {
@@ -117,6 +132,7 @@ func DeleteProperty(ctx iris.Context) {
 			"Error", propertyDeleted.Error.Error(), ctx)
 		return
 	}
+
 	storage.DB.Where("property_id = ?", id).Delete(&models.Apartment{})
 	ctx.StatusCode(iris.StatusNoContent)
 }
@@ -127,6 +143,13 @@ func UpdateProperty(ctx iris.Context) {
 
 	property := GetPropertyAndAssociationsByPropertyID(id, ctx)
 	if property == nil {
+		return
+	}
+
+	claims := jwt.Get(ctx).(*utils.AccessToken)
+
+	if property.UserID != claims.ID {
+		ctx.StatusCode(iris.StatusForbidden)
 		return
 	}
 
