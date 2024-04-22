@@ -14,7 +14,6 @@ func CreateReview(ctx iris.Context) {
 	params := ctx.Params()
 	propertyID := params.Get("id")
 
-	
 	property := GetPropertyAndAssociationsByPropertyID(propertyID, ctx)
 
 	if property == nil {
@@ -67,7 +66,6 @@ func updatePropertyStars(property *models.Property, stars float32) {
 	avg = float32(math.Round(float64(avg)*10) / 10)
 	storage.DB.Model(&property).Update("stars", avg)
 }
-
 
 type CreateReviewInput struct {
 	UserID uint   `json:"userID" validate:"required"`

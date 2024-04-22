@@ -33,18 +33,18 @@ func CreateConversation(ctx iris.Context) {
 		Where("property_id = ? AND tenant_id = ? AND owner_id = ? ", req.PropertyID, req.TenantID, req.OwnerID).
 		Find(&prevConversation)
 
-		if conversationExists.Error != nil {
-			utils.CreateInternalServerError(ctx)
-			return
-		}
+	if conversationExists.Error != nil {
+		utils.CreateInternalServerError(ctx)
+		return
+	}
 
-		if conversationExists.RowsAffected > 0 {
-			ctx.StatusCode(iris.StatusConflict)
-			ctx.Text("Conversation already exists")
-			return
-		}
+	if conversationExists.RowsAffected > 0 {
+		ctx.StatusCode(iris.StatusConflict)
+		ctx.Text("Conversation already exists")
+		return
+	}
 
-		var messages []models.Message
+	var messages []models.Message
 	messages = append(messages, models.Message{
 		SenderID:   req.SenderID,
 		ReceiverID: req.ReceiverID,
@@ -61,7 +61,6 @@ func CreateConversation(ctx iris.Context) {
 	storage.DB.Create(&conversation)
 
 	ctx.JSON(conversation)
-	
 }
 
 func GetConversationByID(ctx iris.Context) {
@@ -82,7 +81,7 @@ func GetConversationByID(ctx iris.Context) {
 	}
 
 	var messages []models.Message
-	messagesQuery := storage.DB.Where("conversation_id= ?", id).Order("created_at Desc").Find(&messages)
+	messagesQuery := storage.DB.Where("conversation_id = ?", id).Order("created_at DESC").Find(&messages)
 
 	if messagesQuery.Error != nil {
 		utils.CreateInternalServerError(ctx)
@@ -100,7 +99,6 @@ func GetConversationsByUserID(ctx iris.Context) {
 
 	results, err := getConversationResultsByUserID(id, ctx)
 
-	
 	if err != nil {
 		return
 	}
@@ -124,7 +122,7 @@ func GetConversationsByUserID(ctx iris.Context) {
 		ON messages.conversation_id = recentMessages.conversation_id 
 		AND messages.created_at = recentMessages.created_at`, conversationIDs).Scan(&messages)
 
-		messageMap := make(map[uint][]models.Message)
+	messageMap := make(map[uint][]models.Message)
 	for _, message := range messages {
 		messageSlice := []models.Message{message}
 		messageMap[message.ConversationID] = messageSlice
@@ -145,7 +143,6 @@ func GetConversationsByUserID(ctx iris.Context) {
 
 	ctx.JSON(results)
 }
-
 
 func getConversationResult(id string, ctx iris.Context) (ConversationResult, error) {
 	var result ConversationResult
@@ -186,17 +183,17 @@ func getConversationResultsByUserID(id string, ctx iris.Context) ([]Conversation
 		Where("conversations.tenant_id = ?", id).Or("conversations.owner_id = ?", id).
 		Scan(&result)
 
-		if resultQuery.Error != nil {
-			utils.CreateInternalServerError(ctx)
-			return result, resultQuery.Error
-		}
+	if resultQuery.Error != nil {
+		utils.CreateInternalServerError(ctx)
+		return result, resultQuery.Error
+	}
 
-		if resultQuery.RowsAffected == 0 {
-			utils.CreateNotFound(ctx)
-			return result, errors.New("Result not found")
-		}
+	if resultQuery.RowsAffected == 0 {
+		utils.CreateNotFound(ctx)
+		return result, errors.New("Result not found")
+	}
 
-		return result, nil
+	return result, nil
 }
 
 type ConversationResult struct {

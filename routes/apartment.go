@@ -100,9 +100,7 @@ func UpdateApartments(ctx iris.Context) {
 	}
 
 	ctx.StatusCode(iris.StatusNoContent)
-
 }
-
 
 type UpdateUnitsInput struct {
 	ID          *uint     `json:"ID"`

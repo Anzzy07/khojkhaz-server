@@ -216,6 +216,7 @@ func UpdateProperty(ctx iris.Context) {
 	}
 
 	storage.DB.Create(&newApartments)
+
 	for index, apartment := range newApartments {
 		if len(*newApartmentImages[index]) > 0 {
 			updateApartmentAndImages(apartment, *newApartmentImages[index])
@@ -270,18 +271,17 @@ func UpdateProperty(ctx iris.Context) {
 }
 
 func GetPropertyAndAssociationsByPropertyID(id string, ctx iris.Context) *models.Property {
-	var property models.Property
-	propertyExits := storage.DB.Preload(clause.Associations).Find(&property, id)
 
-	if propertyExits.Error != nil {
-		utils.CreateError(
-			iris.StatusInternalServerError,
-			"Error", propertyExits.Error.Error(), ctx)
-			return nil
+	var property models.Property
+	propertyExists := storage.DB.Preload(clause.Associations).Find(&property, id)
+
+	if propertyExists.Error != nil {
+		utils.CreateInternalServerError(ctx)
+		return nil
 	}
 
-	if propertyExits.RowsAffected == 0 {
-		utils.CreateError(iris.StatusNotFound, "Property Not Found", "Property Not Found", ctx)
+	if propertyExists.RowsAffected == 0 {
+		utils.CreateNotFound(ctx)
 		return nil
 	}
 
@@ -304,7 +304,6 @@ func GetPropertiesByBoundingBox(ctx iris.Context) {
 
 	ctx.JSON(properties)
 }
-
 
 func updateApartmentAndImages(apartment models.Apartment, images []string) {
 	apartmentID := strconv.FormatUint(uint64(apartment.ID), 10)
@@ -341,8 +340,6 @@ func insertImages(arg InsertImages) []string {
 	}
 	return imagesArr
 }
-
-
 
 type InsertImages struct {
 	images      []string

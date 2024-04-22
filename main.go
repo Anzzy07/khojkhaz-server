@@ -14,7 +14,7 @@ import (
 
 func main() {
 	godotenv.Load()
-    storage.InitializeDB()
+	storage.InitializeDB()
 	storage.InitializeS3()
 	storage.InitializeRedis()
 
@@ -54,7 +54,6 @@ func main() {
 		location.Get("/autocomplete", routes.Autocomplete)
 		location.Get("/search", routes.Search)
 	}
-
 	user := app.Party("/api/user")
 	{
 		user.Post("/register", routes.Register)
@@ -66,50 +65,44 @@ func main() {
 		user.Post("/resetpassword", resetTokenVerifierMiddleware, routes.ResetPassword)
 		user.Get("/{id}/properties/saved", accessTokenVerifierMiddleware, utils.UserIDMiddleware, routes.GetUserSavedProperties)
 		user.Patch("/{id}/properties/saved", accessTokenVerifierMiddleware, utils.UserIDMiddleware, routes.AlterUserSavedProperties)
-		user.Patch("/{id}/pushtoken",accessTokenVerifierMiddleware, utils.UserIDMiddleware, routes.AlterPushToken)
-		user.Patch("/{id}/settings/notifications",accessTokenVerifierMiddleware, utils.UserIDMiddleware,  routes.AllowsNotifications)
-		user.Get("/{id}/properties/contacted",accessTokenVerifierMiddleware, utils.UserIDMiddleware, routes.GetUserContactedProperties)
+		user.Patch("/{id}/pushtoken", accessTokenVerifierMiddleware, utils.UserIDMiddleware, routes.AlterPushToken)
+		user.Patch("/{id}/settings/notifications", accessTokenVerifierMiddleware, utils.UserIDMiddleware, routes.AllowsNotifications)
+		user.Get("/{id}/properties/contacted", accessTokenVerifierMiddleware, utils.UserIDMiddleware, routes.GetUserContactedProperties)
 	}
-
 	property := app.Party("/api/property")
 	{
 		property.Post("/", routes.CreateProperty)
 		property.Get("/{id}", routes.GetProperty)
-		property.Get("/userid/{id}",accessTokenVerifierMiddleware, utils.UserIDMiddleware, routes.GetPropertiesByUserID)
-		property.Delete("/{id}",accessTokenVerifierMiddleware, routes.DeleteProperty)
-		property.Patch("/update/{id}",accessTokenVerifierMiddleware, routes.UpdateProperty)
+		property.Get("/userid/{id}", accessTokenVerifierMiddleware, utils.UserIDMiddleware, routes.GetPropertiesByUserID)
+		property.Delete("/{id}", accessTokenVerifierMiddleware, routes.DeleteProperty)
+		property.Patch("/update/{id}", accessTokenVerifierMiddleware, routes.UpdateProperty)
 		property.Post("/search", routes.GetPropertiesByBoundingBox)
 	}
-
 	apartment := app.Party("/api/apartment")
 	{
 		apartment.Get("/property/{id}", routes.GetApartmentsByPropertyID)
-		apartment.Patch("/property/{id}",accessTokenVerifierMiddleware, routes.UpdateApartments)
+		apartment.Patch("/property/{id}", accessTokenVerifierMiddleware, routes.UpdateApartments)
 	}
-
 	review := app.Party("/api/review")
 	{
-		review.Post("/property/{id}",accessTokenVerifierMiddleware, routes.CreateReview)
+		review.Post("/property/{id}", accessTokenVerifierMiddleware, routes.CreateReview)
 	}
-
 	conversation := app.Party("/api/conversation")
 	{
-		conversation.Post("/",accessTokenVerifierMiddleware, routes.CreateConversation)
-		conversation.Get("/{id}",accessTokenVerifierMiddleware, routes.GetConversationByID)
+		conversation.Post("/", accessTokenVerifierMiddleware, routes.CreateConversation)
+		conversation.Get("/{id}", accessTokenVerifierMiddleware, routes.GetConversationByID)
 		conversation.Get("/user/{id}", accessTokenVerifierMiddleware, utils.UserIDMiddleware, routes.GetConversationsByUserID)
 	}
-
 	messages := app.Party("/api/messages")
 	{
 		messages.Post("/", accessTokenVerifierMiddleware, routes.CreateMessage)
 	}
-
 	notifications := app.Party("/api/notifications")
 	{
 		notifications.Post("/test", routes.TestMessageNotification)
 	}
-
 	app.Post("/api/refresh", refreshTokenVerifierMiddleware, utils.RefreshToken)
 
 	app.Listen(":4000")
+
 }

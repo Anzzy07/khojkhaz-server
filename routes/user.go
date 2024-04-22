@@ -34,10 +34,12 @@ func Register(ctx iris.Context) {
 		utils.CreateInternalServerError(ctx)
 		return
 	}
+
 	if userExists == true {
-		utils.CreateEmailAlreadyRegistered( ctx)
+		utils.CreateEmailAlreadyRegistered(ctx)
 		return
 	}
+
 	hashedPassword, hashErr := hashAndSaltPassword(userInput.Password)
 	if hashErr != nil {
 		utils.CreateInternalServerError(ctx)
@@ -63,6 +65,7 @@ func Login(ctx iris.Context) {
 		utils.HandleValidationErrors(err, ctx)
 		return
 	}
+
 	var existingUser models.User
 	errorMsg := "Invalid email or password."
 	userExists, userExistsErr := getAndHandleUserExists(&existingUser, userInput.Email)
@@ -70,17 +73,20 @@ func Login(ctx iris.Context) {
 		utils.CreateInternalServerError(ctx)
 		return
 	}
+
 	if userExists == false {
 		utils.CreateError(iris.StatusUnauthorized, "Credentials Error", errorMsg, ctx)
 		return
 	}
 
-	// Questionable as to whether it should let userInput know they logged in with Oauth
-	// If we don't want this, simply comment it out and the app will still work
+	// Questionable as to whether you should let userInput know they logged in with Oauth
+	// typically the fewer things said the better
+	// If you don't want this, simply comment it out and the app will still work
 	if existingUser.SocialLogin == true {
 		utils.CreateError(iris.StatusUnauthorized, "Credentials Error", "Social Login Account", ctx)
 		return
 	}
+
 	passwordErr := bcrypt.CompareHashAndPassword([]byte(existingUser.Password), []byte(userInput.Password))
 	if passwordErr != nil {
 		utils.CreateError(iris.StatusUnauthorized, "Credentials Error", errorMsg, ctx)
@@ -642,6 +648,10 @@ type FacebookOrGoogleUserInput struct {
 	AccessToken string `json:"accessToken" validate:"required"`
 }
 
+type AppleUserInput struct {
+	IdentityToken string `json:"identityToken" validate:"required"`
+}
+
 type FacebookUserRes struct {
 	ID    string `json:"id"`
 	Name  string `json:"name"`
@@ -654,10 +664,6 @@ type GoogleUserRes struct {
 	Name       string `json:"name"`
 	GivenName  string `json:"given_name"`
 	FamilyName string `json:"family_name"`
-}
-
-type AppleUserInput struct {
-	IdentityToken string `json:"identityToken" validate:"required"`
 }
 
 type EmailRegisteredInput struct {
