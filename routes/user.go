@@ -293,16 +293,18 @@ func ForgotPassword(ctx iris.Context) {
 			utils.CreateError(iris.StatusUnauthorized, "Credentials Error", "Social Login Account", ctx)
 			return
 		}
-
-		link := " exp://192.168.2.98:8081/--/resetpassword/"
+        //after production in /--/ there should be app name
+		link := "http://192.168.2.98:8081/--/resetpassword/" 
 		token, tokenErr := utils.CreateForgotPasswordToken(user.ID, user.Email)
 
 		if tokenErr != nil {
 			utils.CreateInternalServerError(ctx)
+			log.Printf("Error creating password reset token: %v", tokenErr) // Improved logging
 			return
 		}
 
 		link += token
+		log.Println("Password reset link: ", link)
 		subject := "Forgot Your Password?"
 
 		html := `

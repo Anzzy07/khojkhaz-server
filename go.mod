@@ -39,8 +39,11 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kataras/jwt v0.1.12 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
+	github.com/mailjet/mailjet-apiv3-go/v3 v3.2.0 // indirect
+	github.com/mailjet/mailjet-apiv3-go/v4 v4.0.1 // indirect
 	github.com/oliveroneill/exponent-server-sdk-golang v0.0.0-20210823140141-d050598be512 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
+	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	gorm.io/driver/mysql v1.4.7 // indirect
 )
@@ -79,6 +82,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.26 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/schollz/closestmatch v2.1.0+incompatible // indirect
+	github.com/sendgrid/sendgrid-go v3.14.0+incompatible
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/tdewolff/minify/v2 v2.20.14 // indirect
 	github.com/tdewolff/parse/v2 v2.7.8 // indirect

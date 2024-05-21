@@ -1,36 +1,38 @@
 package utils
 
 import (
+	"fmt"
+	"log"
 	"os"
 
-	"github.com/mailjet/mailjet-apiv3-go"
+	"github.com/sendgrid/sendgrid-go"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
+// SendMail sends an email using SendGrid
 func SendMail(userEmail string, subject string, html string) (bool, error) {
-	publicKey := os.Getenv("EMAIL_API_KEY")
-	privateKey := os.Getenv("EMAIL_SECRET_KEY")
+	apiKey := os.Getenv("SENDGRID_API_KEY")
 
-	mailjetClient := mailjet.NewMailjetClient(publicKey, privateKey)
-	messagesInfo := []mailjet.InfoMessagesV31{
-		{
-			From: &mailjet.RecipientV31{
-				Email: "giftg4754@gmail.com",
-			},
-			To: &mailjet.RecipientsV31{
-				mailjet.RecipientV31{
-					Email: userEmail,
-				},
-			},
-			Subject:  subject,
-			HTMLPart: html,
-		},
-	}
+	// Create a new SendGrid client
+	client := sendgrid.NewSendClient(apiKey)
 
-	messages := mailjet.MessagesV31{Info: messagesInfo}
-	_, err := mailjetClient.SendMailV31(&messages)
+	// Define sender and recipient
+	from := mail.NewEmail("Khojkhaz", "giftg4754@gmail.com")
+	to := mail.NewEmail("User", userEmail)
+
+	// Create the email content
+	message := mail.NewSingleEmail(from, subject, to, "", html)
+
+	// Send the email
+	response, err := client.Send(message)
 	if err != nil {
+		log.Println("Failed to send email:", err)
 		return false, err
 	}
+
+	fmt.Println("Email sent successfully:", response.StatusCode)
+	fmt.Println(response.Body)
+	fmt.Println(response.Headers)
 
 	return true, nil
 }
